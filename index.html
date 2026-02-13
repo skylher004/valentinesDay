@@ -343,24 +343,36 @@
         let shuffleInterval = null;
 
         async function init() {
-            // Fade in header shortly after page load
-            setTimeout(() => { document.getElementById('header').style.opacity = '1'; }, 500);
+    // Fade in header
+    setTimeout(() => { document.getElementById('header').style.opacity = '1'; }, 500);
 
-            try {
-                const response = await fetch(folderPath);
-                const text = await response.text();
-                const regex = /href="([^"]*\.(?i:jpg|png|jpeg|webp))"/g;
-                let matches = [];
-                let match;
-                while ((match = regex.exec(text)) !== null) {
-                    if (match[1] !== 'default.jpg') matches.push(match[1]);
-                }
-                allImages = matches;
-            } catch (err) { console.warn("Local server needed."); }
+    // CHANGE THESE TWO LINES:
+    const repoOwner = 'skylher004'; 
+    const repoName = 'valentinesDay';
+    const folderPathInRepo = 'picture'; // The folder name
 
-            // Wait 5 seconds, then show cards one by one
-            setTimeout(showCardsOneByOne, 5000);
-        }
+    try {
+        // We call the GitHub API instead of the local folder
+        const response = await fetch(`https://api.github.com/repos/${repoOwner}/${repoName}/contents/${folderPathInRepo}`);
+        const data = await response.json();
+
+        // Filter out non-images and the default image
+        allImages = data
+            .filter(file => {
+                const name = file.name.toLowerCase();
+                return (name.endsWith('.jpg') || name.endsWith('.png') || name.endsWith('.jpeg') || name.endsWith('.webp')) 
+                       && name !== 'default.jpg';
+            })
+            .map(file => file.name);
+
+        console.log("Found images:", allImages);
+    } catch (err) {
+        console.error("Error fetching from GitHub API:", err);
+    }
+
+    // Wait 5 seconds, then show cards
+    setTimeout(showCardsOneByOne, 5000);
+}
 
         function showCardsOneByOne() {
             const cards = document.querySelectorAll('.card');
